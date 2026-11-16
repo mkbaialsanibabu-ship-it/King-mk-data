@@ -27,12 +27,17 @@ export default function AuthPage() {
           email,
           password,
           options: {
-            data: {
-              full_name: name,
-              phone: phone,
-            },
-          },
-        });
+  emailRedirectTo: "https://king-mk-data.vercel.app/",
+  data: {
+    full_name: name,
+    phone: phone,
+  },
+},
+                         
+              
+            
+          
+        
 
         if (error) throw error;
 
