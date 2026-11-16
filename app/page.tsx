@@ -29,7 +29,27 @@ const services: { key: Service; title: string; detail: string; icon: typeof Smar
 ];
 
 export default function Home() {
-  const [balanceVisible, setBalanceVisible] = useState(true);
+    const router = useRouter();
+
+  useEffect(() => {
+    let active = true;
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (active && (error || !data.session)) {
+        router.replace("/auth");
+      }
+    });
+
+    const { data: { subscription } } =
+      supabase.auth.onAuthStateChange((_event, session) => {
+        if (!session) router.replace("/auth");
+      });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [router]);const [balanceVisible, setBalanceVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState("Dashboard");
   const [notice, setNotice] = useState("");
