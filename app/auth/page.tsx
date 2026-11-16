@@ -21,41 +21,51 @@ export default function AuthPage() {
     setLoading(true);
     setMessage("");
 
-    try {
-      if (mode === "register") {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-  emailRedirectTo: "https://king-mk-data.vercel.app/",
-  data: {
-    full_name: name,
-    phone: phone,
-  },
-},
-                         
-              
-            
-          
-        
+    
+try {
+  if (mode === "register") {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: "https://king-mk-data.vercel.app/",
+        data: {
+          full_name: name,
+          phone: phone,
+        },
+      },
+    });
 
-        if (error) throw error;
+    if (error) throw error;
 
-      
-if (data.session) {
-  router.push("/");
-  router.refresh();
-} else {
-  setMessage("An aika maka sabon email. Ka duba inbox domin tabbatar da account ɗinka.");
+    if (data.session) {
+      router.push("/");
+      router.refresh();
+    } else {
+      setMessage("An aika maka sabon email. Ka duba inbox domin tabbatar da account ɗinka.");
+    }
+  } else {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) throw error;
+
+    router.push("/");
+    router.refresh();
+  }
+} catch (error) {
+  setMessage(
+    error instanceof Error ? error.message : "An samu kuskure. Ka sake gwadawa."
+  );
+} finally {
+  setLoading(false);
 }
 
-
-
-      
-          
-          
-        
-        
+  
+{
+  setMessage("An aika maka sabon email. Ka duba inbox  
         
       } else {
         const { error } = await supabase.auth.signInWithPassword({
