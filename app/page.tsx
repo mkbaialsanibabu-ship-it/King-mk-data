@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "../lib/supabase";
 import {
   LayoutDashboard, Wallet, ArrowDownToLine, Smartphone, RadioTower,
   Tv, Lightbulb, History, UserRound, Headset, Settings, Bell,
