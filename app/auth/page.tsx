@@ -36,12 +36,22 @@ export default function AuthPage() {
 
         if (error) throw error;
 
-        if (data.session) {
-          router.push("/");
-          router.refresh();
-        } else {
-          setMessage("An aika maka email. Ka duba inbox domin tabbatar da account ɗinka.");
-        }
+      
+if (data.session) {
+  router.push("/");
+  router.refresh();
+} else {
+  setMessage("An aika maka sabon email. Ka duba inbox domin tabbatar da account ɗinka.");
+}
+
+
+
+      
+          
+          
+        
+        
+        
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
