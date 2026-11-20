@@ -36,9 +36,13 @@ export default function AdminPage() {
         .eq("user_id", user.id)
         .single();
 
-      if (roleError || data?.role !== "admin") {
-        router.replace("/");
-        return;
+      if (roleError || data?.role?.trim().toLowerCase() !== "admin") {
+  setMessage("Ba a tabbatar da izinin Admin ba: " + (roleError?.message || "Role ba daidai ba"));
+  setChecking(false);
+  return;
+}
+        
+        
       }
 
       setChecking(false);
