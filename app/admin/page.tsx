@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,9 +13,29 @@ type Tab =
   | "services"
   | "support";
 
+const tabs: { id: Tab; label: string }[] = [
+  { id: "customers", label: "Customers" },
+  { id: "wallets", label: "Wallets" },
+  { id: "transactions", label: "Transactions" },
+  { id: "plans", label: "Data Plans" },
+  { id: "services", label: "Services" },
+  { id: "support", label: "Support" },
+];
+
+const tables: Record<Tab, string> = {
+  customers: "profile",
+  wallets: "wallets",
+  transactions: "transactions",
+  plans: "data_plans",
+  services: "services",
+  support: "support_messages",
+};
+
 export default function AdminPage() {
   const router = useRouter();
+
   const [checking, setChecking] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
   const [tab, setTab] = useState<Tab>("customers");
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,85 +43,121 @@ export default function AdminPage() {
 
   useEffect(() => {
     async function checkAdmin() {
-      const { data: { user }, error } =
-        await supabase.auth.getUser();
+      try {
+        const { data: { user }, error } =
+          await supabase.auth.getUser();
 
-      if (error || !user) {
-        router.replace("/auth");
-        return;
+        if (error || !user) {
+          router.replace("/auth");
+          return;
+        }
+
+        const { data, error: roleError } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .single();
+
+        if (
+          roleError ||
+          data?.role?.trim().toLowerCase() !== "admin"
+        ) {
+          setMessage(
+            "Admin verification failed: " +
+            (roleError?.message || "Role is not admin")
+          );
+          setChecking(false);
+          return;
+        }
+
+        setAuthorized(true);
+        setChecking(false);
+      } catch {
+        setMessage("An error occurred while checking admin access.");
+        setChecking(false);
       }
-
-      const { data, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single();
-
-      if (roleError || data?.role?.trim().toLowerCase() !== "admin") {
-  setMessage("Ba a tabbatar da izinin Admin ba: " + (roleError?.message || "Role ba daidai ba"));
-  setChecking(false);
-  return;
-}
-        
-        
-      }
-
-      setChecking(false);
     }
 
     checkAdmin();
   }, [router]);
 
   useEffect(() => {
-    if (!checking) loadData();
-  }, [tab, checking]);
+    if (authorized) {
+      loadData();
+    }
+  }, [tab, authorized]);
 
   async function loadData() {
     setLoading(true);
     setMessage("");
 
-    const tables: Record<Tab, string> = {
-      customers: "profile",
-      wallets: "wallets",
-      transactions: "transactions",
-      plans: "data_plans",
-      services: "services",
-      support: "support_messages",
-    };
+    try {
+      const { data, error } = await supabase
+        .from(tables[tab])
+        .select("*")
+        .order(
+          tab === "customers" ? "Created at" : "created_at",
+          { ascending: false }
+        )
+        .limit(100);
 
-    const { data, error } = await supabase
-      .from(tables[tab])
-      .select("*")
-      .order(
-        tab === "customers" ? "Created at" : "created_at",
-        { ascending: false }
-      )
-      .limit(100);
+      if (error) {
+        setRows([]);
+        setMessage(error.message);
+      } else {
+        setRows(data || []);
 
-    if (error) {
+        if (!data?.length) {
+          setMessage("No records found in this section yet.");
+        }
+      }
+    } catch {
       setRows([]);
-      setMessage(error.message);
-    } else {
-      setRows(data || []);
-      if (!data?.length) setMessage("Babu bayanai a wannan sashe tukuna.");
+      setMessage("Unable to load data.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
-
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "customers", label: "Customers" },
-    { id: "wallets", label: "Wallets" },
-    { id: "transactions", label: "Transactions" },
-    { id: "plans", label: "Data Plans" },
-    { id: "services", label: "Services" },
-    { id: "support", label: "Support" },
-  ];
 
   if (checking) {
     return (
-      <main style={{ background: "#080808", color: "#d4af37", minHeight: "100vh", padding: 30 }}>
-        Ana tabbatar da izinin Admin...
+      <main style={{
+        background: "#080808",
+        color: "#d4af37",
+        minHeight: "100vh",
+        padding: 30
+      }}>
+        Checking Admin permission...
+      </main>
+    );
+  }
+
+  if (!authorized) {
+    return (
+      <main style={{
+        background: "#080808",
+        color: "white",
+        minHeight: "100vh",
+        padding: 30
+      }}>
+        <h2 style={{ color: "#d4af37" }}>
+          KING MK DATA
+        </h2>
+        <h3>Admin Access Error</h3>
+        <p style={{ color: "#ffaaaa", marginTop: 15 }}>
+          {message}
+        </p>
+        <button
+          onClick={() => router.replace("/")}
+          style={{
+            marginTop: 20,
+            padding: 12,
+            background: "#d4af37",
+            borderRadius: 8
+          }}
+        >
+          Back to Dashboard
+        </button>
       </main>
     );
   }
@@ -112,7 +169,11 @@ export default function AdminPage() {
       minHeight: "100vh",
       padding: 20
     }}>
-      <h1 style={{ color: "#d4af37", fontSize: 28, fontWeight: "bold" }}>
+      <h1 style={{
+        color: "#d4af37",
+        fontSize: 28,
+        fontWeight: "bold"
+      }}>
         KING MK DATA
       </h1>
 
@@ -197,7 +258,10 @@ export default function AdminPage() {
               An samo {rows.length} bayanai (har zuwa 100).
             </p>
 
-            <div style={{ overflowX: "auto", marginTop: 15 }}>
+            <div style={{
+              overflowX: "auto",
+              marginTop: 15
+            }}>
               <table style={{
                 width: "100%",
                 borderCollapse: "collapse",
@@ -263,3 +327,4 @@ export default function AdminPage() {
     </main>
   );
 }
+
